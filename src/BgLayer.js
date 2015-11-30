@@ -3,8 +3,7 @@ var BgLayer = cc.Layer.extend({
     _bgImg: null,
 
     _menu: null,
-    _startBtn: null,
-    _isStart: false,
+    _btnStart: null,
 
     _stageList: [],
     _stageWd: 0,
@@ -18,6 +17,10 @@ var BgLayer = cc.Layer.extend({
     _stick: null,
     _stickHg: 0,
     _isStickReady: false,
+
+    _score: 0,
+
+    _gameOverLayer: null,
 
     ctor: function () {
         this._super();
@@ -38,15 +41,15 @@ var BgLayer = cc.Layer.extend({
         this.addChild(this._bgImg);
 
         // 添加开始按钮
-        this._startBtn = new cc.MenuItemImage(
-            res.startBtnNormal_png,
-            res.startBtnSelect_png,
+        this._btnStart = new cc.MenuItemImage(
+            res.btnStartNormal_png,
+            res.btnStartSelect_png,
             this._start,
             this
         );
         this._menu = new cc.Menu();
-        this._menu.addChild(this._startBtn);
         this._menu.setPosition(cc.winSize.width / 2, cc.winSize.height / 2);
+        this._menu.addChild(this._btnStart);
         this.addChild(this._menu);
 
         // 添加三个平台
@@ -217,17 +220,17 @@ var BgLayer = cc.Layer.extend({
         if(this._stickHg < moveDistanceMin){
             moveDistance = this._stageHg;
             console.log('太短了，移动到' + moveDistance + '时，角色掉下');
-            // 等角色移动到头，棍子再掉下
-            this._stick.runAction(cc.rotateBy(0.1, 90));
-
+            this._fallStickAndPlayer(moveDistance);
         }else if(this._stickHg > moveDistanceMax){
             moveDistance = moveDistanceMax;
             console.log('太长了，移动到' + moveDistance + '时，角色掉下');
-            // 等角色移动到头，棍子再掉下
-            this._stick.runAction(cc.rotateBy(0.1, 90));
+            this._fallStickAndPlayer(moveDistance);
         }else{
             moveDistance = moveDistanceMax - this._stageWd;
             console.log('刚刚好，移动到' + moveDistance + '时，角色停下，移动平台');
+
+            // 分数加一
+            this._score++;
 
             // 修改当前平台信息
             this._curStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
@@ -246,6 +249,22 @@ var BgLayer = cc.Layer.extend({
             // 初始化棍子
             this._initStick();
         }
-    }
+    },
+    _fallStickAndPlayer: function (moveDistance) {
+        // 角色掉落
 
+        // 棍子掉落
+        this._stick.runAction(cc.rotateBy(0.1, 90));
+
+        // 显示游戏结束层
+        this._showGameOverLayer();
+    },
+
+    /**
+     * 游戏结束层
+     */
+    _showGameOverLayer: function () {
+        this._gameOverLayer = new GameOverLayer();
+        this.addChild(this._gameOverLayer);
+    }
 });
