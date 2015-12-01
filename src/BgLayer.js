@@ -44,7 +44,7 @@ var BgLayer = cc.Layer.extend({
         this._btnStart = new cc.MenuItemImage(
             res.btnStartNormal_png,
             res.btnStartSelect_png,
-            this._start,
+            this.start,
             this
         );
         this._menu = new cc.Menu();
@@ -94,7 +94,7 @@ var BgLayer = cc.Layer.extend({
     },
 
     // 开始游戏
-    _start: function () {
+    start: function () {
 
         // 移除开始按钮
         this.removeChild(this._menu);
@@ -265,6 +265,7 @@ var BgLayer = cc.Layer.extend({
      */
     _showGameOverLayer: function () {
         this._gameOverLayer = new GameOverLayer();
+        this._gameOverLayer.showScore(this._score);
         this.addChild(this._gameOverLayer);
     }
 });

@@ -7,7 +7,9 @@ var res = {
     btnStartSelect_png : "res/btn_start_select.png",
     black_png : "res/black.png",
     btnRestart_png : "res/btn_restart.png",
-    btnHome_png : "res/btn_home.png"
+    btnHome_png : "res/btn_home.png",
+    btnWxShare_png : "res/btn_wx_share.png",
+    scoreBg_png : "res/score_bg.png"
 };
 
 var g_resources = [];
