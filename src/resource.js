@@ -9,7 +9,9 @@ var res = {
     btnRestart_png : "res/btn_restart.png",
     btnHome_png : "res/btn_home.png",
     btnWxShare_png : "res/btn_wx_share.png",
-    scoreBg_png : "res/score_bg.png"
+    scoreBg_png : "res/score_bg.png",
+    overScoreBg_png : "res/over_score_bg.png",
+    wxShareTip_png : "res/wx_share_tip.png"
 };
 
 var g_resources = [];

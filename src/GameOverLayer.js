@@ -7,6 +7,8 @@ var GameOverLayer = cc.Layer.extend({
     _btnHome: null,
     _btnWxShare: null,
 
+    _isOnWxShare: false,
+
     _curScore: 0,
 
     ctor: function () {
@@ -19,6 +21,14 @@ var GameOverLayer = cc.Layer.extend({
         this._maskLayer = new cc.LayerColor(cc.color(125, 125, 125, 125));
         this.addChild(this._maskLayer);
 
+        // 添加回到首页按钮
+        this._btnHome = new cc.MenuItemImage(
+            res.btnHome_png,
+            res.btnHome_png,
+            this._onHome,
+            this);
+        this._btnHome.setPosition(cc.winSize.width / 4, 0);
+
         // 添加重新开始按钮
         this._btnRestart = new cc.MenuItemImage(
             res.btnRestart_png,
@@ -26,78 +36,96 @@ var GameOverLayer = cc.Layer.extend({
             this._onRestart,
             this
         );
-        this._btnRestart.setPosition(100, 0);
-
-        // 添加回到首页按钮
-        this._btnHome = new cc.MenuItemImage(
-            res.btnHome_png,
-            res.btnHome_png,
-            this._onHome,
-            this);
-        this._btnHome.setPosition(-100, 0);
+        this._btnRestart.setPosition(cc.winSize.width / 2, 0);
 
         // 添加微信分享按钮
         this._btnWxShare= new cc.MenuItemImage(
             res.btnWxShare_png,
             res.btnWxShare_png,
             this._onWxShare, this);
-        this._btnWxShare.setPosition(0, cc.winSize.height / 2 - this._btnWxShare.getContentSize().height);
+        this._btnWxShare.setPosition(cc.winSize.width * 3 / 4, 0);
 
         // 添加按钮菜单
         this._menu = new cc.Menu();
-        this._menu.setPosition(cc.winSize.width / 2, cc.winSize.height / 2);
         this._menu.addChild(this._btnRestart);
         this._menu.addChild(this._btnHome);
         this._menu.addChild(this._btnWxShare);
+        this._menu.setPosition(0, cc.winSize.height / 2 - this._btnHome.height - 30);
         this.addChild(this._menu);
 
     },
     _onRestart: function () {
 
-        console.log('重新开始');
-
         // 移除游戏结束层
         this.removeFromParent(true);
 
-        // 创建新的场景，重新开始游戏
-        var tmpScene = new cc.Scene();
+        // 切换到新的主场景（淡入淡出），并重新开始游戏
+        var newScene = new cc.Scene();
         var bgLayer = new BgLayer();
-        tmpScene.addChild(bgLayer, -1, 0);
-        cc.director.runScene(tmpScene);
+        newScene.addChild(bgLayer, -1, 0);
+        cc.director.runScene(new cc.TransitionFade(1, newScene, false));
         bgLayer.start();
     },
     _onHome: function () {
 
-        console.log('回到首页');
-
         // 移除游戏结束层
         this.removeFromParent(true);
 
-        // 重新运行主场景
-        cc.director.runScene(new MainScene());
+        // 切换到新的主场景（淡入淡出）
+        cc.director.runScene(new cc.TransitionFade(1, new MainScene(), false));
     },
     _onWxShare: function () {
-        console.log('微信分享');
+        if(!this._isOnWxShare) {
+            var wxShareTip = new cc.Sprite(res.wxShareTip_png);
+            wxShareTip.setPosition(cc.winSize.width / 2, cc.winSize.height - wxShareTip.height / 2);
+            this.addChild(wxShareTip, 2);
+        }
     },
 
     showScore: function(curScore){
 
+        // 保存当前分数
         this._curScore = curScore;
-        cc.sys.localStorage.setItem("curScore", curScore);
+        cc.sys.localStorage.setItem('curScore', curScore);
 
-        // 添加分数精灵
-        var sbg = new cc.Sprite(res.scoreBg_png);
-        var sbgSize = sbg.getContentSize();
-        sbg.x = cc.winSize.width / 2;
-        sbg.y = cc.winSize.height / 2 + 220;
+        // 创建分数背景层
+        var scoreBg = new cc.Sprite(res.overScoreBg_png);
+        scoreBg.x = cc.winSize.width / 2;
+        scoreBg.y = cc.winSize.height / 2 + scoreBg.height / 2;
 
-        // 添加分数文本
-        var curScoreText = new cc.LabelTTF("", "Arial", 50);
-        curScoreText.setPosition(cc.p(sbgSize.width / 2, sbgSize.height / 2));
+        // 添加当前分数标题
+        var curScoreTitle = new cc.LabelTTF('分数', '微软雅黑', 24);
+        curScoreTitle.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 50));
+        curScoreTitle.setColor(cc.color(0, 0, 0));
+        scoreBg.addChild(curScoreTitle, 2);
+
+        // 添加当前分数文本
+        var curScoreText = new cc.LabelTTF(curScore.toString(), 'Arial', 50);
+        curScoreText.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 100));
         curScoreText.setColor(cc.color(0, 0, 0));
-        curScoreText.setString(curScore);
-        sbg.addChild(curScoreText, 2);
+        scoreBg.addChild(curScoreText, 2);
 
-        this.addChild(sbg, 1);
+        // 添加最佳分数标题
+        var bestScoreTitle = new cc.LabelTTF('最佳', '微软雅黑', 24);
+        bestScoreTitle.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 160));
+        bestScoreTitle.setColor(cc.color(0, 0, 0));
+        scoreBg.addChild(bestScoreTitle, 2);
+
+        // 获取最佳分数
+        var bestScore = cc.sys.localStorage.getItem('bestScore');
+        if(!bestScore){
+            bestScore = 0;
+        }
+        bestScore = curScore < bestScore ? bestScore : curScore;
+        cc.sys.localStorage.setItem('bestScore', bestScore);
+
+        // 添加最佳分数文本
+        var bestScoreText = new cc.LabelTTF(bestScore.toString(), 'Arial', 50);
+        bestScoreText.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 210));
+        bestScoreText.setColor(cc.color(0,0,0));
+        scoreBg.addChild(bestScoreText, 2);
+
+        // 添加分数背景层
+        this.addChild(scoreBg, 1);
     }
 });

@@ -22,6 +22,9 @@ var BgLayer = cc.Layer.extend({
 
     _gameOverLayer: null,
 
+    _shakeNode: null,
+    _shakeNodeGrid: null,
+
     ctor: function () {
         this._super();
         this._init();
@@ -30,15 +33,18 @@ var BgLayer = cc.Layer.extend({
 
         // 添加随机背景图
         var bgRandNum = Math.floor(cc.random0To1() * 4);
-        var bgRes = res['bg' + bgRandNum + '_png'];
-        this._bgImg = new cc.Sprite(bgRes);
+        this._bgImg = new cc.Sprite(res['bg' + bgRandNum + '_png']);
         this._bgImg.attr({
             x: cc.winSize.width / 2,
-            y: cc.winSize.height / 2,
-            scale: 1,
-            rotation: 0
+            y: cc.winSize.height / 2
         });
-        this.addChild(this._bgImg);
+
+        // 添加震动层
+        this._shakeNode = new cc.Node();
+        this._shakeNodeGrid = new cc.NodeGrid();
+        this._shakeNodeGrid.addChild(this._shakeNode);
+        this._shakeNode.addChild(this._bgImg);
+        this.addChild(this._shakeNodeGrid);
 
         // 添加开始按钮
         this._btnStart = new cc.MenuItemImage(
@@ -139,14 +145,17 @@ var BgLayer = cc.Layer.extend({
         var nextStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
         var nextStage = this._stageList[nextStageIndex];
 
-        // 设置下个平台的随机宽度 2 ~ 42
-        var randomScale = Math.floor(cc.random0To1() * 40) + 2;
+        // 设置下个平台的随机宽度 2 ~ 30
+        var randomScale = Math.floor(cc.random0To1() * 30);
+        randomScale = randomScale ? randomScale : 2;
         nextStage.setScaleX(randomScale);
+        console.log('下个平台的随机宽度' + randomScale);
 
         // 设置下个平台的随机位置
         var randomX = cc.winSize.width / 2;
         var nextStageMoveTo = new cc.MoveTo(0.3, randomX, this._stageY);
         nextStage.runAction(nextStageMoveTo);
+        console.log('下个平台的随机位置' + randomX);
     },
 
     /**
@@ -256,8 +265,11 @@ var BgLayer = cc.Layer.extend({
         // 棍子掉落
         this._stick.runAction(cc.rotateBy(0.1, 90));
 
+        // 震动屏幕
+        this._shakeNodeGrid.runAction(cc.shaky3D(0.5, cc.size(1, 1), 10, false));
+
         // 显示游戏结束层
-        this._showGameOverLayer();
+        //this._showGameOverLayer();
     },
 
     /**
