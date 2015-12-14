@@ -61,10 +61,10 @@ var GameOverLayer = cc.Layer.extend({
 
         // 切换到新的主场景（淡入淡出），并重新开始游戏
         var newScene = new cc.Scene();
-        var bgLayer = new BgLayer();
-        newScene.addChild(bgLayer, -1, 0);
+        var gameLayer = new GameLayer();
+        newScene.addChild(gameLayer, -1, 0);
         cc.director.runScene(new cc.TransitionFade(1, newScene, false));
-        bgLayer.start();
+        gameLayer.start();
     },
     _onHome: function () {
 
