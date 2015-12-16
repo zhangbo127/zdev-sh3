@@ -16,6 +16,8 @@ var Player = {
         // 初始化精灵
         this._playerSpr = new cc.Sprite('#d0001.png');
         this._playerSpr.setAnchorPoint(0.5, 0);
+
+        return this;
     },
 
     getPlayerSprite: function () {
