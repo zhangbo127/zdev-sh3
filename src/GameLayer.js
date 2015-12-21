@@ -137,17 +137,39 @@ var GameLayer = cc.Layer.extend({
 
     _moveCurStage: function () {
 
-        // 移动当前平台到开始位置
-        this._curStage.runAction(cc.moveTo(0.2, this._stageStartX, this._stageY));
+        // 计算移动距离
+        var moveDistance = this._curStage.x - this._stageStartX;
 
-        // 移动主角到开始位置
-        var moveToX = this._stageStartX + this._curStageScaleWd / 2 - this._playerSpr.width / 2;
+        // 移动主角
+        this._playerSpr.runAction(cc.moveBy(0.2, - moveDistance, 0));
+        /*
         this._playerSpr.runAction(
             cc.sequence(
-                cc.moveTo(0.2, moveToX, this._stageHg),
+                cc.moveBy(0.2, - moveDistance, 0),
+                cc.callFunc(function () {
+
+                    // 计算主角的开始位置
+                    var playerStartX = this._stageStartX + this._curStageScaleWd / 2 - this._playerSpr.width / 2;
+                    playerStartX = Math.round(playerStartX * 10) / 10;
+
+                    // 判断主角是否已经在开始位置
+                    var playerCurX = Math.round(this._playerSpr.x * 10) / 10;
+                    if(playerCurX != playerStartX){
+                        this._playerSpr.runAction(cc.moveTo(0.1, playerStartX, this._stageHg));
+                    }
+
+                }, this)
+            )
+        );
+        */
+
+        // 移动当前平台
+        this._curStage.runAction(
+            cc.sequence(
+                cc.moveBy(0.2, - moveDistance, 0),
                 cc.callFunc(function () {
                     // 初始化棍子
-                    this._initStick();
+                    this._initCurStick();
                 }, this)
             )
         );
@@ -202,7 +224,7 @@ var GameLayer = cc.Layer.extend({
 
         // 设置下个平台的随机位置
         var randomX = cc.winSize.width / 2;
-        var nextStageMoveTo = new cc.MoveTo(0.3, randomX, this._stageY);
+        var nextStageMoveTo = new cc.MoveTo(0.2, randomX, this._stageY);
         nextStage.runAction(nextStageMoveTo);
         console.log('下个平台的随机位置' + randomX);
     },
@@ -229,7 +251,7 @@ var GameLayer = cc.Layer.extend({
     /**
      * 棍子方法
      */
-    _initStick: function () {
+    _initCurStick: function () {
 
         // 初始化棍子的角度和位置
         this._curStick.setRotation(0);
@@ -267,68 +289,83 @@ var GameLayer = cc.Layer.extend({
      */
     _movePlayer: function () {
 
-        var tagetStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
-        var tagetStage = this._stageList[tagetStageIndex];
+        var _this = this;
+
+        var tagetStageIndex = _this._curStageIndex == 2 ? 0 : _this._curStageIndex + 1;
+        var tagetStage = _this._stageList[tagetStageIndex];
         var tagetStageScaleWd = tagetStage.width * tagetStage.getScaleX();
 
-        var moveDistanceMin = tagetStage.x - tagetStageScaleWd / 2  - this._stageStartX - this._curStageScaleWd / 2;
+        var moveDistanceMin = tagetStage.x - tagetStageScaleWd / 2  - _this._stageStartX - _this._curStageScaleWd / 2;
         var moveDistanceMax = moveDistanceMin + tagetStageScaleWd;
         var moveDistance = 0;
 
-        if(this._curStickHg < moveDistanceMin){
-            moveDistance = this._curStickHg;
-            console.log('太短了，移动到' + moveDistance + '时，角色掉下');
-            this._fallStickAndPlayer(moveDistance);
-        }else if(this._curStickHg > moveDistanceMax){
+        if(_this._curStickHg < moveDistanceMin){
+            moveDistance = _this._curStickHg;
+            //console.log('太短了，移动到' + moveDistance + '时，角色掉下');
+            _this._fallStickAndPlayer(moveDistance);
+        }else if(_this._curStickHg > moveDistanceMax){
             moveDistance = moveDistanceMax;
-            console.log('太长了，移动到' + moveDistance + '时，角色掉下');
-            this._fallStickAndPlayer(moveDistance);
+            //console.log('太长了，移动到' + moveDistance + '时，角色掉下');
+            _this._fallStickAndPlayer(moveDistance);
         }else{
-            moveDistance = moveDistanceMax - this._stageWd;
-            console.log('刚刚好，移动到' + moveDistance + '时，角色停下，移动平台');
+            moveDistance = moveDistanceMax;
+            //console.log('刚刚好，移动到' + moveDistance + '时，角色停下，移动平台');
 
-            // 分数加一
-            this._score++;
+            _this._playerSpr.runAction(
+                cc.sequence(
+                    cc.moveTo(0.2, tagetStage.x, _this._stageHg),
+                    cc.delayTime(2),
+                    cc.callFunc(function () {
 
-            // 移动旧的平台
-            this._moveOldStage();
+                        console.log('当前角色X:' + _this._playerSpr.x);
 
-            // 移动当前平台
-            this._moveCurStage();
+                        // 分数加一
+                        _this._score ++;
 
-            // 添加下个平台
-            this._addNextStage();
+                        // 移动旧的平台
+                        _this._moveOldStage();
 
-            // 初始化棍子
-            this._initStick();
+                        // 移动当前平台
+                        _this._moveCurStage();
+
+                        // 添加下个平台
+                        _this._addNextStage();
+
+                        // 初始化棍子
+                        _this._initCurStick();
+
+                    }, _this)
+                )
+            );
         }
     },
     _fallStickAndPlayer: function (moveDistance) {
 
-        var moveByX = moveDistance + this._playerSpr.width / 2;
+        var _this = this;
+        var moveByX = moveDistance + _this._playerSpr.width / 2;
 
-        this._playerSpr.runAction(
+        _this._playerSpr.runAction(
             cc.sequence(
                 cc.moveBy(0.2, moveByX, 0),
                 cc.callFunc(function () {
 
                     // 棍子掉落
-                    this._curStick.runAction(cc.rotateBy(0.1, 90));
+                    _this._curStick.runAction(cc.rotateBy(0.1, 90));
 
                     // 角色掉落
-                    this._playerSpr.runAction(
+                    _this._playerSpr.runAction(
                         cc.sequence(
-                            cc.moveBy(0.3, 0, - (this._stageHg + this._playerSpr.height)),
+                            cc.moveBy(0.3, 0, - (_this._stageHg + _this._playerSpr.height)),
                             cc.callFunc(function () {
                                 // 震动背景层
-                                this._bgImg.runAction(cc.jumpBy(0.2, cc.p(0, 0), 10, 2));
+                                _this._bgImg.runAction(cc.jumpBy(0.2, cc.p(0, 0), 10, 2));
                                 // 显示游戏结束层
-                                this._showGameOverLayer();
-                            }, this)
+                                _this._showGameOverLayer();
+                            }, _this)
                         )
                     );
 
-                }, this)
+                }, _this)
             )
         );
     },
