@@ -19,7 +19,12 @@ var res = {
     playerWalk_png : "res/player_walk.png",
     playerWalk_plist : "res/player_walk.plist",
     playerYao_png : "res/player_yao.png",
-    playerYao_plist : "res/player_yao.plist"
+    playerYao_plist : "res/player_yao.plist",
+    button_ogg : "res/sound/button.ogg",
+    stickExtend_ogg : "res/sound/stick_extend.ogg",
+    stickRotate_ogg : "res/sound/stick_rotate.ogg",
+    playerFall_ogg : "res/sound/player_fall.ogg",
+    score_ogg : "res/sound/score.ogg"
 };
 
 var g_resources = [];

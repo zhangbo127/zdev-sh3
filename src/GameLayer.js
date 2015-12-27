@@ -120,10 +120,17 @@ var GameLayer = cc.Layer.extend({
                 _this._onTouchEnded.call(_this, touch, event);
             }
         }, this);
+
+        // 设置声音大小
+        cc.audioEngine.setEffectsVolume(1);
+        cc.audioEngine.setMusicVolume(1);
     },
 
     // 开始游戏
     start: function () {
+
+        // 播放音效
+        cc.audioEngine.playEffect(res.button_ogg);
 
         // 移除开始按钮
         this.removeChild(this._menu);
@@ -141,8 +148,6 @@ var GameLayer = cc.Layer.extend({
         var moveDistance = this._curStage.x - this._stageStartX;
 
         // 移动主角
-        this._playerSpr.runAction(cc.moveBy(0.2, - moveDistance, 0));
-        /*
         this._playerSpr.runAction(
             cc.sequence(
                 cc.moveBy(0.2, - moveDistance, 0),
@@ -161,7 +166,6 @@ var GameLayer = cc.Layer.extend({
                 }, this)
             )
         );
-        */
 
         // 移动当前平台
         this._curStage.runAction(
@@ -264,6 +268,8 @@ var GameLayer = cc.Layer.extend({
     },
     _extendStick: function () {
         this.schedule(this._extendStickCallback, 0.02);
+        // 播放棍子伸长的声音
+        cc.audioEngine.playMusic(res.stickExtend_ogg, true);
     },
     _extendStickCallback: function () {
         this._curStick.setScaleY(this._curStick.scaleY + 0.07);
@@ -272,6 +278,8 @@ var GameLayer = cc.Layer.extend({
         this.unschedule(this._extendStickCallback);
         this._curStickHg = this._curStick.height * this._curStick.getScaleY();
         this._isStickReady = false;
+        // 停止播放棍子伸长的声音
+        cc.audioEngine.stopMusic();
     },
     _rotateStick1: function () {
         var _this = this;
@@ -279,7 +287,12 @@ var GameLayer = cc.Layer.extend({
             cc.sequence(
                 cc.delayTime(0.3),
                 cc.rotateBy(0.1, 90),
-                cc.callFunc(_this._movePlayer, _this)
+                cc.callFunc(function () {
+                    // 播放棍子到位的声音
+                    cc.audioEngine.playEffect(res.stickRotate_ogg);
+                    // 移动角色
+                    _this._movePlayer();
+                }, _this)
             )
         );
     },
@@ -313,14 +326,14 @@ var GameLayer = cc.Layer.extend({
 
             _this._playerSpr.runAction(
                 cc.sequence(
-                    cc.moveTo(0.2, tagetStage.x, _this._stageHg),
-                    cc.delayTime(2),
+                    cc.moveBy(0.2, moveDistance, 0),
                     cc.callFunc(function () {
-
-                        console.log('当前角色X:' + _this._playerSpr.x);
 
                         // 分数加一
                         _this._score ++;
+
+                        // 播放加分声音
+                        cc.audioEngine.playEffect(res.score_ogg);
 
                         // 移动旧的平台
                         _this._moveOldStage();
@@ -358,9 +371,17 @@ var GameLayer = cc.Layer.extend({
                             cc.moveBy(0.3, 0, - (_this._stageHg + _this._playerSpr.height)),
                             cc.callFunc(function () {
                                 // 震动背景层
-                                _this._bgImg.runAction(cc.jumpBy(0.2, cc.p(0, 0), 10, 2));
-                                // 显示游戏结束层
-                                _this._showGameOverLayer();
+                                _this._bgImg.runAction(
+                                    cc.sequence(
+                                        cc.jumpBy(0.2, cc.p(0, 0), 10, 2),
+                                        cc.callFunc(function () {
+                                            // 播放角色掉落的声音
+                                            cc.audioEngine.playEffect(res.playerFall_ogg);
+                                            // 显示游戏结束层
+                                            _this._showGameOverLayer();
+                                        }, this)
+                                    )
+                                );
                             }, _this)
                         )
                     );
