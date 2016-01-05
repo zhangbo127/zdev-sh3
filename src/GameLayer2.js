@@ -22,6 +22,9 @@ var GameLayer = cc.Layer.extend({
     _curStickIndex: null,
     _curStickHg: 0,
 
+    _stageGroupList: [],
+    _curStageGroup: null,
+
     _stick: null,
     _stickHg: 0,
     _isStickReady: false,
@@ -61,48 +64,62 @@ var GameLayer = cc.Layer.extend({
         _this._menu = btnMenu;
         _this._btnStart = btnStart;
 
-        // 添加三个平台
+        // 添加三个平台组
         for(var i = 0; i < 3; i++){
 
             // 创建平台
             var stageTmp = new cc.Sprite(res.black_png);
-            stageTmp.setTextureRect(cc.rect(0, 0, 120, 300));
             stageTmp.setAnchorPoint(0.5, 0);
-            stageTmp.setPosition(cc.winSize.width + stageTmp.width, 0);
-            if(0 == i){
-                // 设置第一个平台的属性
-                stageTmp.setPositionX(cc.winSize.width / 2);
-                // 更新当前平台的信息
+            stageTmp.y = 0;
+            if(0 == i) {
+                // 设置首个平台的属性
+                stageTmp.setTextureRect(new cc.Rect(0, 0, 100, 100));
+                // 设置当前平台的信息
                 _this._curStageIndex = 0;
                 _this._curStage = stageTmp;
-                _this._curStageScaleWd = stageTmp.width;
-                // 更新全局平台的信息
+                _this._curStageScaleWd = stageTmp.width * stageTmp.getScaleX();
+                // 设置全局平台的信息
                 _this._stageWd = stageTmp.width;
                 _this._stageHg = stageTmp.height;
-                _this._stageY = stageTmp.y;
             }
-            _this.addChild(stageTmp, 3);
             _this._stageList[i] = stageTmp;
 
             // 创建棍子
             var stickTmp = new cc.Sprite(res.black_png);
-            stickTmp.setScaleY(1);
             stickTmp.setAnchorPoint(0.5, 0);
-            stickTmp.setPosition(stageTmp.width, stageTmp.height);
-            if(0 == i){
-                // 更新当前棍子的信息
+            stickTmp.y = stageTmp.height;
+            if(0 == i) {
+                // 设置当前棍子的信息
                 _this._curStickIndex = 0;
                 _this._curStick = stickTmp;
             }
-            stageTmp.addChild(stickTmp, 1);
             _this._stickList[i] = stickTmp;
-        }
 
+            // 创建平台组
+            var stageGroupTmp = new cc.Sprite();
+            stageGroupTmp.setAnchorPoint(0.5, 0);
+            stageGroupTmp.y = 0;
+            if(0 == i){
+                // 设置首个平台组的属性
+                stageGroupTmp.x = cc.winSize.width / 2;
+                // 设置当前平台组的信息
+                _this._curStageGroup = stageGroupTmp;
+            }else{
+                // 设置其他平台组的属性
+                stageGroupTmp.x = cc.winSize.width - stageTmp.width / 2 - 50;
+            }
+            _this._stageGroupList[i] = stageGroupTmp;
+
+            // 添加平台组
+            stageGroupTmp.addChild(stageTmp, 1);
+            stageGroupTmp.addChild(stickTmp, 2);
+            _this.addChild(stageGroupTmp, 3);
+        }
 
         // 添加角色
         var playerCtrl = Player.init();
         var playerSpr = playerCtrl.getPlayerSprite();
-        playerSpr.x = cc.winSize.width / 2;
+        playerSpr.x = _this._curStageGroup.x;
         playerSpr.y = _this._stageHg;
         playerCtrl.setPlayerStanding();
         _this.addChild(playerSpr);
@@ -119,7 +136,7 @@ var GameLayer = cc.Layer.extend({
             onTouchEnded: function (touch, event) {
                 _this._onTouchEnded.call(_this, touch, event);
             }
-        }, this);
+        }, _this);
 
         // 设置声音大小
         cc.audioEngine.setEffectsVolume(1);
@@ -145,7 +162,7 @@ var GameLayer = cc.Layer.extend({
     _moveCurStage: function () {
 
         // 计算移动距离
-        var moveDistance = this._curStage.x - this._stageStartX;
+        var moveDistance = this._curStageGroup.x - this._stageStartX;
 
         // 移动主角
         this._playerSpr.runAction(
@@ -154,6 +171,7 @@ var GameLayer = cc.Layer.extend({
                 cc.callFunc(function () {
 
                     // 计算主角的开始位置
+                    /*
                     var playerStartX = this._stageStartX + this._curStageScaleWd / 2 - this._playerSpr.width / 2;
                     playerStartX = Math.round(playerStartX * 10) / 10;
 
@@ -162,17 +180,17 @@ var GameLayer = cc.Layer.extend({
                     if(playerCurX != playerStartX){
                         this._playerSpr.runAction(cc.moveTo(0.1, playerStartX, this._stageHg));
                     }
+                    */
 
                 }, this)
             )
         );
 
-        // 移动当前平台
-        this._curStage.runAction(
+        // 移动当前平台组
+        this._curStageGroup.runAction(
             cc.sequence(
                 cc.moveBy(0.2, - moveDistance, 0),
                 cc.callFunc(function () {
-                    // 初始化棍子
                     this._initCurStick();
                 }, this)
             )
@@ -181,19 +199,19 @@ var GameLayer = cc.Layer.extend({
 
     _moveOldStage: function () {
 
-        // 保存旧的平台
+        // 获取旧的平台
         var oldStage = this._curStage;
         var oldStageScaleWd = this._curStageScaleWd;
 
-        // 保存旧的棍子
+        // 获取旧的棍子
         var oldStick = this._curStick;
 
-        // 更新当前平台信息
+        // 更新当前平台的信息
         this._curStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
         this._curStage = this._stageList[this._curStageIndex];
         this._curStageScaleWd = this._curStage.width * this._curStage.getScaleX();
 
-        // 更新当前棍子信息
+        // 更新当前棍子的信息
         this._curStickIndex = this._curStageIndex;
         this._curStick = this._stickList[this._curStickIndex];
         this._curStickHg = 0;
@@ -216,22 +234,18 @@ var GameLayer = cc.Layer.extend({
 
     _addNextStage: function () {
 
-        // 获取下个平台
-        var nextStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
+        // 设置下个平台的随机宽度 2 ~ 30
+        var nextStageIndex = (this._curStageIndex == 2 ? 0 : this._curStageIndex + 1);
         var nextStage = this._stageList[nextStageIndex];
+        var randomScale = Math.floor(cc.random0To1() * 30) + 5;
+        nextStage.setScaleX(randomScale);
+        console.log('下个平台的原始位置：' + nextStage.y);
 
-        // 设置下个平台的随机宽度 10 ~ 110
-        var randomWidth = Math.floor(cc.random0To1() * 100) + 10;
-        var nextStageRect = nextStage.getTextureRect();
-        nextStageRect.width = randomWidth;
-        nextStage.setTextureRect(nextStageRect);
-        console.log('下个平台的随机宽度' + randomWidth);
-
-        // 设置下个平台的随机位置
+        // 设置下个平台组的随机位置
+        var nextStageGroup = this._stageGroupList[nextStageIndex];
         var randomX = cc.winSize.width / 2;
-        var nextStageMoveTo = new cc.MoveTo(0.2, randomX, this._stageY);
-        nextStage.runAction(nextStageMoveTo);
-        console.log('下个平台的随机位置' + randomX);
+        nextStageGroup.runAction(cc.moveTo(0.2, randomX, 0));
+        console.log('下个平台组的随机位置：' + randomX);
     },
 
     /**
@@ -260,8 +274,8 @@ var GameLayer = cc.Layer.extend({
 
         // 初始化棍子的角度和位置
         this._curStick.setRotation(0);
-        this._curStick.setScaleY(0);
-        this._curStick.x = this._stageStartX + this._curStageScaleWd / 2;
+        this._curStick.setScaleY(0.1);
+        this._curStick.x = this._curStageScaleWd / 2;
         this._curStickHg = 0;
 
         // 标记棍子已就绪
