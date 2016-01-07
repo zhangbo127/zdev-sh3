@@ -5,22 +5,20 @@ var GameLayer = cc.Layer.extend({
     _menu: null,
     _btnStart: null,
 
+    _stageNum: 4,
     _stageList: [],
-    _stageWd: 0,
-    _stageHg: 0,
     _stageY: 0,
     _stageStartX: 120,
     _curStage: null,
     _curStageIndex: 0,
-    _curStageScaleWd: 0,
 
     _playerCtrl: null,
     _playerSpr: null,
 
     _stickList: [],
     _curStick: null,
-    _curStickIndex: null,
     _curStickHg: 0,
+    _curStickIndex: null,
 
     _stick: null,
     _stickHg: 0,
@@ -42,8 +40,7 @@ var GameLayer = cc.Layer.extend({
         var bgImgIndex = Math.floor(cc.random0To1() * 4);
         var bgImg = new cc.Sprite(res['bg' + bgImgIndex + '_png']);
         bgImg.setScale(1.1);
-        bgImg.x = cc.winSize.width / 2;
-        bgImg.y = cc.winSize.height / 2;
+        bgImg.setPosition(cc.winSize.width / 2, cc.winSize.height / 2);
         _this.addChild(bgImg);
         _this._bgImg = bgImg;
 
@@ -61,49 +58,51 @@ var GameLayer = cc.Layer.extend({
         _this._menu = btnMenu;
         _this._btnStart = btnStart;
 
-        // 添加三个平台
-        for(var i = 0; i < 3; i++){
+        // 添加四个平台
+        for(var i = 0; i < _this._stageNum; i++){
 
             // 创建平台
-            var stageTmp = new cc.Sprite(res.black_png);
-            stageTmp.setTextureRect(cc.rect(0, 0, 120, 300));
-            stageTmp.setAnchorPoint(0.5, 0);
-            stageTmp.setPosition(cc.winSize.width + stageTmp.width, 0);
-            if(0 == i){
-                // 设置第一个平台的属性
-                stageTmp.setPositionX(cc.winSize.width / 2);
-                // 更新当前平台的信息
-                _this._curStageIndex = 0;
-                _this._curStage = stageTmp;
-                _this._curStageScaleWd = stageTmp.width;
-                // 更新全局平台的信息
-                _this._stageWd = stageTmp.width;
-                _this._stageHg = stageTmp.height;
-                _this._stageY = stageTmp.y;
-            }
-            _this.addChild(stageTmp, 3);
-            _this._stageList[i] = stageTmp;
+            var tmpStage = new cc.Sprite(res.black_png);
+            tmpStage.setAnchorPoint(0.5, 0);
+            tmpStage.setTextureRect(cc.rect(0, 0, 160, tmpStage.height));
+            tmpStage.setPosition(cc.winSize.width + tmpStage.width, 0);
+            _this._stageList[i] = tmpStage;
 
             // 创建棍子
-            var stickTmp = new cc.Sprite(res.black_png);
-            stickTmp.setScaleY(1);
-            stickTmp.setAnchorPoint(0.5, 0);
-            stickTmp.setPosition(stageTmp.width, stageTmp.height);
+            var tmpStick = new cc.Sprite(res.black_png);
+            tmpStick.setScaleY(0);
+            tmpStick.setAnchorPoint(0.5, 0);
+            tmpStick.setPosition(tmpStage.width, tmpStage.height);
+            _this._stickList[i] = tmpStick;
+
+            // 保存全局的信息
             if(0 == i){
-                // 更新当前棍子的信息
+
+                // 设置第一个平台的属性
+                tmpStage.setPositionX(cc.winSize.width / 2);
+
+                // 保存当前平台的信息
+                _this._curStageIndex = 0;
+                _this._curStage = tmpStage;
+
+                // 保存当前棍子的信息
                 _this._curStickIndex = 0;
-                _this._curStick = stickTmp;
+                _this._curStick = tmpStick;
+
+                // 保存全局平台的信息
+                _this._stageHg = tmpStage.height;
             }
-            stageTmp.addChild(stickTmp, 1);
-            _this._stickList[i] = stickTmp;
+
+            // 添加平台和棍子
+            tmpStage.addChild(tmpStick, 1);
+            _this.addChild(tmpStage, 3);
         }
 
 
         // 添加角色
         var playerCtrl = Player.init();
         var playerSpr = playerCtrl.getPlayerSprite();
-        playerSpr.x = cc.winSize.width / 2;
-        playerSpr.y = _this._stageHg;
+        playerSpr.setPosition(cc.winSize.width / 2, _this._curStage.height);
         playerCtrl.setPlayerStanding();
         _this.addChild(playerSpr);
         _this._playerCtrl = playerCtrl;
@@ -138,29 +137,31 @@ var GameLayer = cc.Layer.extend({
         // 移动当前平台
         this._moveCurStage();
 
-        // 添加下个平台
+        // 添加下一个平台
         this._addNextStage();
     },
 
     _moveCurStage: function () {
 
+        var _this = this;
+
         // 计算移动距离
-        var moveDistance = this._curStage.x - this._stageStartX;
+        var moveDistance = _this._curStage.x - _this._stageStartX;
 
         // 移动主角
-        this._playerSpr.runAction(
+        _this._playerSpr.runAction(
             cc.sequence(
                 cc.moveBy(0.2, - moveDistance, 0),
                 cc.callFunc(function () {
 
                     // 计算主角的开始位置
-                    var playerStartX = this._stageStartX + this._curStageScaleWd / 2 - this._playerSpr.width / 2;
+                    var playerStartX = this._stageStartX + this._curStage.width / 2 - this._playerSpr.width / 2;
                     playerStartX = Math.round(playerStartX * 10) / 10;
 
                     // 判断主角是否已经在开始位置
                     var playerCurX = Math.round(this._playerSpr.x * 10) / 10;
                     if(playerCurX != playerStartX){
-                        this._playerSpr.runAction(cc.moveTo(0.1, playerStartX, this._stageHg));
+                        this._playerSpr.runAction(cc.moveTo(0.1, playerStartX, this._curStage.height));
                     }
 
                 }, this)
@@ -168,70 +169,65 @@ var GameLayer = cc.Layer.extend({
         );
 
         // 移动当前平台
-        this._curStage.runAction(
+        _this._curStage.runAction(
             cc.sequence(
                 cc.moveBy(0.2, - moveDistance, 0),
                 cc.callFunc(function () {
-                    // 初始化棍子
-                    this._initCurStick();
-                }, this)
+                    _this._initCurStick();
+                }, _this)
             )
         );
     },
 
     _moveOldStage: function () {
 
-        // 保存旧的平台
-        var oldStage = this._curStage;
-        var oldStageScaleWd = this._curStageScaleWd;
+        var _this = this;
 
-        // 保存旧的棍子
-        var oldStick = this._curStick;
+        // 获取旧的平台
+        var oldStage = _this._curStage;
 
-        // 更新当前平台信息
-        this._curStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
-        this._curStage = this._stageList[this._curStageIndex];
-        this._curStageScaleWd = this._curStage.width * this._curStage.getScaleX();
+        // 更新当前平台的信息
+        _this._curStageIndex = ((_this._curStageIndex + 1) % _this._stageNum);
+        _this._curStage = _this._stageList[_this._curStageIndex];
 
-        // 更新当前棍子信息
-        this._curStickIndex = this._curStageIndex;
-        this._curStick = this._stickList[this._curStickIndex];
-        this._curStickHg = 0;
+        // 更新当前棍子的信息
+        _this._curStick = _this._stickList[_this._curStageIndex];
+        _this._curStickHg = 0;
 
-        // 移动旧的平台
-        var oldMoveByX = - (this._curStage.x - this._stageStartX);
-        oldStage.runAction(
-            cc.sequence(
-                cc.moveBy(0.2, oldMoveByX, 0),
-                cc.callFunc(function () {
-                    // 移动完成后，将旧的平台放到窗口右侧
-                    oldStage.x = cc.winSize.width + oldStageScaleWd / 2;
-                }, this)
-            )
-        );
-
-        // 移动旧的棍子
-        oldStick.runAction(cc.moveBy(0.2, oldMoveByX, 0));
+        // 移动上一个平台
+        var moveDistance = _this._curStage.x - _this._stageStartX;
+        oldStage.runAction(cc.moveBy(0.2, - moveDistance, 0));
     },
 
     _addNextStage: function () {
 
-        // 获取下个平台
-        var nextStageIndex = this._curStageIndex == 2 ? 0 : this._curStageIndex + 1;
-        var nextStage = this._stageList[nextStageIndex];
+        var _this = this;
 
-        // 设置下个平台的随机宽度 10 ~ 110
-        var randomWidth = Math.floor(cc.random0To1() * 100) + 10;
+        // 获取下一个平台
+        var nextStageIndex = ((_this._curStageIndex + 1) % _this._stageNum);
+        var nextStage = _this._stageList[nextStageIndex];
+
+        // 设置下一个平台的随机宽度 10 ~ 110
+        //var randomWidth = Math.floor(cc.random0To1() * 100) + 10;
+        var randomWidth = 100;
         var nextStageRect = nextStage.getTextureRect();
         nextStageRect.width = randomWidth;
         nextStage.setTextureRect(nextStageRect);
-        console.log('下个平台的随机宽度' + randomWidth);
 
-        // 设置下个平台的随机位置
+        // 设置下一个平台的初始化位置
+        nextStage.setPositionX(cc.winSize.width + randomWidth);
+
+        // 移动下一个平台到随机位置
         var randomX = cc.winSize.width / 2;
-        var nextStageMoveTo = new cc.MoveTo(0.2, randomX, this._stageY);
+        var nextStageMoveTo = cc.moveTo(0.2, randomX, _this._curStage.y);
         nextStage.runAction(nextStageMoveTo);
-        console.log('下个平台的随机位置' + randomX);
+
+        // 初始化下一个棍子
+        var nextStick = _this._stickList[nextStageIndex];
+        nextStick.setScaleY(0);
+    },
+    _getNextStageRandomX: function (nextStage) {
+
     },
 
     /**
@@ -258,14 +254,16 @@ var GameLayer = cc.Layer.extend({
      */
     _initCurStick: function () {
 
+        var _this = this;
+
         // 初始化棍子的角度和位置
-        this._curStick.setRotation(0);
-        this._curStick.setScaleY(0);
-        this._curStick.x = this._stageStartX + this._curStageScaleWd / 2;
-        this._curStickHg = 0;
+        _this._curStick.setRotation(0);
+        _this._curStick.setScaleY(0);
+        _this._curStick.setPositionX(_this._curStage.width);
+        _this._curStickHg = 0;
 
         // 标记棍子已就绪
-        this._isStickReady = true;
+        _this._isStickReady = true;
     },
     _extendStick: function () {
         this.schedule(this._extendStickCallback, 0.02);
@@ -305,12 +303,11 @@ var GameLayer = cc.Layer.extend({
 
         var _this = this;
 
-        var tagetStageIndex = _this._curStageIndex == 2 ? 0 : _this._curStageIndex + 1;
-        var tagetStage = _this._stageList[tagetStageIndex];
-        var tagetStageScaleWd = tagetStage.width * tagetStage.getScaleX();
+        var targetStageIndex = ((_this._curStageIndex + 1) % _this._stageNum);
+        var targetStage = _this._stageList[targetStageIndex];
 
-        var moveDistanceMin = tagetStage.x - tagetStageScaleWd / 2  - _this._stageStartX - _this._curStageScaleWd / 2;
-        var moveDistanceMax = moveDistanceMin + tagetStageScaleWd;
+        var moveDistanceMin = targetStage.x - targetStage.width / 2  - _this._stageStartX - _this._curStage.width / 2;
+        var moveDistanceMax = moveDistanceMin + targetStage.width;
         var moveDistance = 0;
 
         if(_this._curStickHg < moveDistanceMin){
@@ -344,9 +341,6 @@ var GameLayer = cc.Layer.extend({
 
                         // 添加下个平台
                         _this._addNextStage();
-
-                        // 初始化棍子
-                        _this._initCurStick();
 
                     }, _this)
                 )
