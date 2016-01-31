@@ -94,22 +94,22 @@ var GameOverLayer = cc.Layer.extend({
         scoreBg.y = cc.winSize.height / 2 + scoreBg.height / 2;
 
         // 添加当前分数标题
-        var curScoreTitle = new cc.LabelTTF('分数', '微软雅黑', 24);
-        curScoreTitle.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 50));
-        curScoreTitle.setColor(cc.color(0, 0, 0));
-        scoreBg.addChild(curScoreTitle, 2);
+        //var curScoreTitleLbl = new cc.LabelTTF('分数', '微软雅黑', 24);
+        //curScoreTitleLbl.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 50));
+        //curScoreTitleLbl.setColor(cc.color(0, 0, 0));
+        //scoreBg.addChild(curScoreTitleLbl, 2);
 
         // 添加当前分数文本
-        var curScoreText = new cc.LabelTTF(curScore.toString(), 'Arial', 50);
-        curScoreText.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 100));
-        curScoreText.setColor(cc.color(0, 0, 0));
-        scoreBg.addChild(curScoreText, 2);
+        var curScoreLbl = new cc.LabelTTF(curScore.toString(), 'Arial', 50);
+        curScoreLbl.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 100));
+        curScoreLbl.setColor(cc.color(0, 0, 0));
+        scoreBg.addChild(curScoreLbl, 2);
 
-        // 添加最佳分数标题
-        var bestScoreTitle = new cc.LabelTTF('最佳', '微软雅黑', 24);
-        bestScoreTitle.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 160));
-        bestScoreTitle.setColor(cc.color(0, 0, 0));
-        scoreBg.addChild(bestScoreTitle, 2);
+        // 添加最佳分数标签
+        //var bestScoreLbl = new cc.LabelTTF('最佳', '微软雅黑', 24);
+        //bestScoreLbl.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 160));
+        //bestScoreLbl.setColor(cc.color(0, 0, 0));
+        //scoreBg.addChild(bestScoreLbl, 2);
 
         // 获取最佳分数
         var bestScore = cc.sys.localStorage.getItem('bestScore');
@@ -122,7 +122,7 @@ var GameOverLayer = cc.Layer.extend({
         // 添加最佳分数文本
         var bestScoreText = new cc.LabelTTF(bestScore.toString(), 'Arial', 50);
         bestScoreText.setPosition(cc.p(scoreBg.width / 2, scoreBg.height - 210));
-        bestScoreText.setColor(cc.color(0,0,0));
+        bestScoreText.setColor(cc.color(0, 0, 0));
         scoreBg.addChild(bestScoreText, 2);
 
         // 添加分数背景层

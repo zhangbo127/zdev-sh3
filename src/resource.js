@@ -11,6 +11,7 @@ var res = {
     btnWxShare_png : "res/btn_wx_share.png",
     scoreBg_png : "res/score_bg.png",
     overScoreBg_png : "res/over_score_bg.png",
+    guideText_png : "res/guide_text.png",
     wxShareTip_png : "res/wx_share_tip.png",
     playerKick_png : "res/player_kick.png",
     playerKick_plist : "res/player_kick.plist",
